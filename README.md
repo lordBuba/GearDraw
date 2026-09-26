@@ -43,7 +43,7 @@ stable-diffusion.cpp/
 
 Then simply run `GearDraw.exe`.
 
-GearDraw uses the existing `sd-cli.exe` from your stable-diffusion.cpp installation, so no additional backend installation is required.
+GearDraw does not include Stable-Diffusion.cpp sd-cli.exe
 
 [Download stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp/releases)
 
