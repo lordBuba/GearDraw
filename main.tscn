@@ -1,0 +1,546 @@
+[gd_scene format=3 uid="uid://dokpbhrian78w"]
+
+[ext_resource type="Script" uid="uid://b06481nlngqjp" path="res://main.gd" id="1_h2yge"]
+[ext_resource type="Material" uid="uid://cd2xq1j3fgxfv" path="res://viewport_texture.tres" id="1_ig7tw"]
+[ext_resource type="Script" uid="uid://ddpuf3bev3odu" path="res://run_generation.gd" id="2_0xm2m"]
+
+[node name="Control" type="Control" unique_id=621909228]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_h2yge")
+
+[node name="Panel" type="Panel" parent="." unique_id=1804566622]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.9990001
+anchor_bottom = 1.0
+offset_right = 0.15185547
+
+[node name="PromptPresets" type="HBoxContainer" parent="Panel" unique_id=1768177402]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.043
+anchor_right = 0.5
+anchor_bottom = 0.043
+offset_left = 69.0
+offset_top = -27.864
+offset_right = 0.5
+offset_bottom = 0.13599968
+
+[node name="RenameDialog" type="ConfirmationDialog" parent="Panel" unique_id=182707584]
+oversampling_override = 1.0
+title = ""
+position = Vector2i(101, 55)
+size = Vector2i(200, 88)
+
+[node name="LineEdit" type="LineEdit" parent="Panel/RenameDialog" unique_id=2074813472]
+anchors_preset = -1
+anchor_left = 0.010000001
+anchor_top = -0.28
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = 6.0
+offset_top = 32.64
+offset_right = -8.0
+offset_bottom = -5.0
+placeholder_text = "name"
+
+[node name="Prompt" type="TextEdit" parent="Panel" unique_id=208199391]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.007
+anchor_top = 0.048
+anchor_right = 0.5
+anchor_bottom = 0.29900002
+offset_left = -0.05700016
+offset_top = 1.8959999
+offset_right = 0.5
+offset_bottom = 0.24798584
+text = "An authentic and captivating of a young woman, maintaining an elegant posture"
+emoji_menu_enabled = false
+middle_mouse_paste_enabled = false
+wrap_mode = 1
+scroll_smooth = true
+scroll_past_end_of_file = true
+draw_tabs = true
+
+[node name="promptLabel" type="RichTextLabel" parent="Panel/Prompt" unique_id=1954138946]
+layout_mode = 0
+offset_top = -19.0
+offset_right = 99.0
+theme_override_font_sizes/normal_font_size = 12
+text = "Prompt:"
+
+[node name="addImage" type="Button" parent="Panel/Prompt" unique_id=718544370]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 0.009000001
+offset_right = 34.0
+offset_bottom = 30.028
+text = "🖼️"
+
+[node name="ImageFileDialog" type="FileDialog" parent="Panel" unique_id=202867767]
+oversampling_override = 1.0
+title = "Open a File"
+position = Vector2i(0, 36)
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.png", "*.jpg", "*.jpeg")
+
+[node name="NegativePrompt" type="TextEdit" parent="Panel" unique_id=1325378617]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.007
+anchor_top = 0.33
+anchor_right = 0.5
+anchor_bottom = 0.49800003
+offset_left = -0.05700016
+offset_top = 0.1599884
+offset_right = 0.5
+offset_bottom = 0.29599
+text = "low quality"
+emoji_menu_enabled = false
+middle_mouse_paste_enabled = false
+wrap_mode = 1
+scroll_smooth = true
+scroll_past_end_of_file = true
+draw_tabs = true
+
+[node name="n-promptLabel2" type="RichTextLabel" parent="Panel/NegativePrompt" unique_id=1893650213]
+layout_mode = 1
+anchors_preset = -1
+offset_top = -18.999998
+offset_right = 143.0
+theme_override_font_sizes/normal_font_size = 12
+text = "Negative prompt:"
+
+[node name="ColorRect" type="ColorRect" parent="Panel" unique_id=1539855977]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.007
+anchor_top = 0.52000004
+anchor_right = 0.5
+anchor_bottom = 0.9850001
+offset_left = -0.05700016
+offset_top = -0.960022
+offset_right = 0.5
+offset_bottom = -0.2800293
+color = Color(0.172, 0.2, 0.172, 1)
+
+[node name="TextureRect" type="TextureRect" parent="Panel/ColorRect" unique_id=434599902]
+material = ExtResource("1_ig7tw")
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="image_to_image" type="TextureRect" parent="Panel" unique_id=1623499887]
+visible = false
+material = ExtResource("1_ig7tw")
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.53000003
+anchor_top = 0.056
+anchor_right = 0.97
+anchor_bottom = 0.409
+offset_left = -0.030029297
+offset_top = -0.288002
+offset_right = -0.47009277
+offset_bottom = -0.03201294
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Mask" type="TextureRect" parent="Panel/image_to_image" unique_id=1701147387]
+modulate = Color(1, 1, 1, 0.5019608)
+material = ExtResource("1_ig7tw")
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="strength" type="RichTextLabel" parent="Panel/image_to_image" unique_id=316508962]
+custom_minimum_size = Vector2(70, 20)
+custom_maximum_size = Vector2(70, 20)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = -0.039
+anchor_top = 1.044
+anchor_right = -0.039
+anchor_bottom = 1.044
+offset_left = -0.015999794
+offset_top = -0.10600281
+offset_right = 69.984
+offset_bottom = 19.893997
+grow_vertical = 0
+theme_override_font_sizes/normal_font_size = 14
+text = "Strength"
+fit_content = true
+scroll_active = false
+vertical_alignment = 1
+
+[node name="SliderStrength" type="HSlider" parent="Panel/image_to_image" unique_id=917553012]
+custom_minimum_size = Vector2(50, 20)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.09900001
+anchor_top = 1.044
+anchor_right = 0.462
+anchor_bottom = 1.044
+offset_left = -0.09400177
+offset_top = -0.07600403
+offset_right = 0.22799683
+offset_bottom = 20.374008
+size_flags_vertical = 1
+min_value = 0.05
+max_value = 1.0
+step = 0.01
+value = 0.75
+
+[node name="valueStrength" type="RichTextLabel" parent="Panel/image_to_image" unique_id=1302418046]
+custom_minimum_size = Vector2(40, 20)
+custom_maximum_size = Vector2(40, 20)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.462
+anchor_top = 1.044
+anchor_right = 0.462
+anchor_bottom = 1.044
+offset_left = 0.22799683
+offset_top = -0.07600403
+offset_right = 40.227997
+offset_bottom = 19.923996
+text = "0.75"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="ButtonClearImage" type="Button" parent="Panel/image_to_image" unique_id=1478763011]
+layout_mode = 1
+anchors_preset = -1
+offset_left = -3.0040741e-05
+offset_right = 21.999937
+offset_bottom = 25.0
+theme_override_font_sizes/font_size = 12
+text = "X"
+
+[node name="InpaintButton" type="Button" parent="Panel/image_to_image" unique_id=358334278]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.58100003
+anchor_top = 1.044
+anchor_right = 0.58100003
+anchor_bottom = 1.044
+offset_left = -0.98602295
+offset_top = -0.07600403
+offset_right = 49.013977
+offset_bottom = 24.923996
+theme_override_font_sizes/font_size = 12
+text = "Inpaint"
+
+[node name="ModelFileDialog" type="FileDialog" parent="Panel" unique_id=535444763]
+oversampling_override = 1.0
+title = "Open a File"
+position = Vector2i(0, 36)
+file_mode = 0
+display_mode = 1
+access = 2
+filters = PackedStringArray("*.gguf", "*.safetensors")
+
+[node name="LoraFileDialog" type="FileDialog" parent="Panel" unique_id=795060562]
+oversampling_override = 1.0
+title = "Open a Directory"
+position = Vector2i(0, 36)
+file_mode = 2
+display_mode = 1
+access = 2
+
+[node name="HSplitContainer" type="HSplitContainer" parent="Panel" unique_id=281052557]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.521
+anchor_top = 0.97
+anchor_right = 0.98300004
+anchor_bottom = 0.97
+offset_left = 0.3289795
+offset_top = -322.56
+offset_right = 4.5668945
+offset_bottom = -291.56
+
+[node name="ModelPath" type="LineEdit" parent="Panel/HSplitContainer" unique_id=1662308471]
+custom_minimum_size = Vector2(0, 30)
+custom_maximum_size = Vector2(-1, 30)
+layout_mode = 2
+placeholder_text = "path to model"
+
+[node name="ModelPathButton" type="Button" parent="Panel/HSplitContainer" unique_id=2041780965]
+custom_minimum_size = Vector2(40, 30)
+custom_maximum_size = Vector2(40, 30)
+layout_mode = 2
+text = "..."
+
+[node name="HSplitContainer2" type="HSplitContainer" parent="Panel" unique_id=1748708986]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.521
+anchor_top = 0.97
+anchor_right = 0.98300004
+anchor_bottom = 0.97
+offset_left = 0.3289795
+offset_top = -288.56
+offset_right = 4.5668945
+offset_bottom = -257.56
+
+[node name="LoraPath" type="LineEdit" parent="Panel/HSplitContainer2" unique_id=1866543320]
+custom_minimum_size = Vector2(0, 30)
+custom_maximum_size = Vector2(-1, 30)
+layout_mode = 2
+placeholder_text = "path to loras folder "
+
+[node name="SelectLora" type="Button" parent="Panel/HSplitContainer2" unique_id=1727470464]
+custom_minimum_size = Vector2(40, 30)
+custom_maximum_size = Vector2(40, 30)
+layout_mode = 2
+text = "..."
+
+[node name="HContainer" type="HSplitContainer" parent="Panel" unique_id=1648033722]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.521
+anchor_top = 0.96900004
+anchor_right = 0.98700005
+anchor_bottom = 0.96900004
+offset_left = 5.3289795
+offset_top = -250.91205
+offset_right = -0.037109375
+offset_bottom = -125.91205
+split_offsets = PackedInt32Array(128, 340)
+split_offset = 128
+
+[node name="VContainer1" type="VBoxContainer" parent="Panel/HContainer" unique_id=1793723766]
+custom_minimum_size = Vector2(70, 0)
+custom_maximum_size = Vector2(70, -1)
+layout_mode = 2
+
+[node name="width" type="RichTextLabel" parent="Panel/HContainer/VContainer1" unique_id=305806751]
+custom_minimum_size = Vector2(70, 20)
+custom_maximum_size = Vector2(70, 20)
+layout_mode = 2
+text = "Width"
+fit_content = true
+scroll_active = false
+vertical_alignment = 1
+
+[node name="height" type="RichTextLabel" parent="Panel/HContainer/VContainer1" unique_id=1185496169]
+custom_minimum_size = Vector2(70, 20)
+custom_maximum_size = Vector2(70, 20)
+layout_mode = 2
+text = "Height"
+fit_content = true
+scroll_active = false
+vertical_alignment = 1
+
+[node name="steps" type="RichTextLabel" parent="Panel/HContainer/VContainer1" unique_id=2066020155]
+custom_minimum_size = Vector2(70, 20)
+custom_maximum_size = Vector2(70, 20)
+layout_mode = 2
+text = "Steps"
+fit_content = true
+scroll_active = false
+vertical_alignment = 1
+
+[node name="cfg" type="RichTextLabel" parent="Panel/HContainer/VContainer1" unique_id=1960795016]
+custom_minimum_size = Vector2(70, 20)
+custom_maximum_size = Vector2(70, 20)
+layout_mode = 2
+text = "CFG"
+fit_content = true
+scroll_active = false
+vertical_alignment = 1
+
+[node name="Seed" type="RichTextLabel" parent="Panel/HContainer/VContainer1" unique_id=2121736198]
+custom_minimum_size = Vector2(70, 20)
+custom_maximum_size = Vector2(70, 20)
+layout_mode = 2
+text = "Seed"
+fit_content = true
+scroll_active = false
+vertical_alignment = 1
+
+[node name="VContainer2" type="VBoxContainer" parent="Panel/HContainer" unique_id=907283727]
+layout_mode = 2
+
+[node name="SliderWidth" type="HSlider" parent="Panel/HContainer/VContainer2" unique_id=872571586]
+custom_minimum_size = Vector2(200, 20)
+layout_mode = 2
+size_flags_vertical = 1
+min_value = 256.0
+max_value = 1280.0
+step = 64.0
+value = 512.0
+
+[node name="SliderHeight" type="HSlider" parent="Panel/HContainer/VContainer2" unique_id=898918064]
+custom_minimum_size = Vector2(200, 20)
+layout_mode = 2
+size_flags_vertical = 1
+min_value = 256.0
+max_value = 1280.0
+step = 64.0
+value = 512.0
+
+[node name="SliderSteps" type="HSlider" parent="Panel/HContainer/VContainer2" unique_id=2008741204]
+custom_minimum_size = Vector2(200, 20)
+layout_mode = 2
+size_flags_vertical = 1
+min_value = 1.0
+max_value = 80.0
+value = 24.0
+
+[node name="SliderCFG" type="HSlider" parent="Panel/HContainer/VContainer2" unique_id=930647814]
+custom_minimum_size = Vector2(200, 20)
+layout_mode = 2
+size_flags_vertical = 1
+min_value = 1.0
+max_value = 10.0
+step = 0.1
+value = 5.0
+
+[node name="SeedEdit" type="LineEdit" parent="Panel/HContainer/VContainer2" unique_id=361106755]
+custom_minimum_size = Vector2(0, 20)
+custom_maximum_size = Vector2(-1, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+text = "-1"
+alignment = 1
+max_length = 10
+emoji_menu_enabled = false
+
+[node name="VContainer3" type="VBoxContainer" parent="Panel/HContainer" unique_id=994528763]
+custom_minimum_size = Vector2(60, 0)
+custom_maximum_size = Vector2(60, -1)
+layout_mode = 2
+
+[node name="valueWidth" type="RichTextLabel" parent="Panel/HContainer/VContainer3" unique_id=390992267]
+custom_minimum_size = Vector2(40, 20)
+custom_maximum_size = Vector2(40, 20)
+layout_mode = 2
+text = "512"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="valueHeight" type="RichTextLabel" parent="Panel/HContainer/VContainer3" unique_id=1006547001]
+custom_minimum_size = Vector2(40, 20)
+custom_maximum_size = Vector2(40, 20)
+layout_mode = 2
+text = "512"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="valueSteps" type="RichTextLabel" parent="Panel/HContainer/VContainer3" unique_id=2137112273]
+custom_minimum_size = Vector2(40, 20)
+custom_maximum_size = Vector2(40, 20)
+layout_mode = 2
+text = "20"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="valueCFG" type="RichTextLabel" parent="Panel/HContainer/VContainer3" unique_id=1793148715]
+custom_minimum_size = Vector2(40, 20)
+custom_maximum_size = Vector2(40, 20)
+layout_mode = 2
+text = "7"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="ButtonSeed" type="Button" parent="Panel/HContainer/VContainer3" unique_id=886614557]
+custom_minimum_size = Vector2(0, 20)
+custom_maximum_size = Vector2(-1, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Random"
+
+[node name="Container" type="HSplitContainer" parent="Panel" unique_id=967061494]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.521
+anchor_top = 0.96900004
+anchor_right = 0.9850001
+anchor_bottom = 0.96900004
+offset_left = 0.3289795
+offset_top = -125.91205
+offset_right = 0.26489258
+offset_bottom = -85.91205
+split_offsets = PackedInt32Array(0, 0)
+
+[node name="Generate" type="Button" parent="Panel/Container" unique_id=322572162]
+custom_minimum_size = Vector2(200, 30)
+custom_maximum_size = Vector2(200, 30)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Generate"
+script = ExtResource("2_0xm2m")
+
+[node name="Stop" type="Button" parent="Panel/Container" unique_id=1373691865]
+custom_minimum_size = Vector2(60, 30)
+custom_maximum_size = Vector2(60, 30)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+disabled = true
+text = "Stop"
+
+[node name="ProgressBar" type="ProgressBar" parent="Panel/Container" unique_id=1084272414]
+custom_minimum_size = Vector2(60, 30)
+custom_maximum_size = Vector2(-1, 30)
+layout_mode = 2
+offset_transform_enabled = true
+offset_transform_pivot_ratio = Vector2(0.5, 0)
+
+[node name="panel_out" type="ColorRect" parent="Panel" unique_id=1891187552]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.521
+anchor_top = 0.96900004
+anchor_right = 0.98700005
+anchor_bottom = 0.96900004
+offset_left = 0.3289795
+offset_top = -85.91205
+offset_right = -0.037109375
+offset_bottom = 0.08795166
+color = Color(0.13333334, 0.13333334, 0.13333334, 1)
+
+[node name="outText" type="RichTextLabel" parent="Panel/panel_out" unique_id=604622067]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 0.98800004
+offset_left = 5.0
+offset_bottom = 0.03199768
+focus_mode = 2
+theme_override_font_sizes/normal_font_size = 12
+text = "console start: 
+"
+scroll_following = true
+scroll_following_visible_characters = true
+selection_enabled = true
+drag_and_drop_selection_enabled = false

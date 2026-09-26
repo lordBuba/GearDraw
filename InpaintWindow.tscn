@@ -1,0 +1,162 @@
+[gd_scene format=3 uid="uid://c35k50nh673uc"]
+
+[ext_resource type="Script" uid="uid://cu0x3g7fbg1wv" path="res://InpaintWindow.gd" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_p8l7v"]
+bg_color = Color(1, 1, 1, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.99203974, 0.91900575, 0.625267, 1)
+corner_radius_top_left = 100
+corner_radius_top_right = 100
+corner_radius_bottom_right = 100
+corner_radius_bottom_left = 100
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8cof1"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.1, 0.1, 0.1, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.96352106, 0.77346885, 0.26698184, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[node name="InpaintWindow" type="Window" unique_id=1232411682]
+oversampling_override = 1.0
+title = "Inpaint"
+position = Vector2i(0, 36)
+size = Vector2i(900, 700)
+min_size = Vector2i(500, 400)
+script = ExtResource("1")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=29148577]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Canvas" type="Control" parent="VBoxContainer" unique_id=1722778309]
+clip_contents = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Image" type="TextureRect" parent="VBoxContainer/Canvas" unique_id=1825153297]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Mask" type="TextureRect" parent="VBoxContainer/Canvas" unique_id=1859692126]
+modulate = Color(1, 1, 1, 0.5019608)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BrushCursor" type="Panel" parent="VBoxContainer/Canvas" unique_id=1876185186]
+layout_mode = 0
+offset_right = 20.0
+offset_bottom = 20.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_p8l7v")
+
+[node name="SelectionRect" type="Panel" parent="VBoxContainer/Canvas" unique_id=1969342667]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_8cof1")
+
+[node name="Bottom" type="HBoxContainer" parent="VBoxContainer" unique_id=1363390509]
+custom_minimum_size = Vector2(0, 45)
+layout_mode = 2
+alignment = 1
+
+[node name="BrushLabel" type="Label" parent="VBoxContainer/Bottom" unique_id=1939914205]
+layout_mode = 2
+text = "Brush:"
+
+[node name="BrushSize" type="HSlider" parent="VBoxContainer/Bottom" unique_id=292083449]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+min_value = 5.0
+max_value = 300.0
+value = 40.0
+
+[node name="BrushValue" type="Label" parent="VBoxContainer/Bottom" unique_id=606049902]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+text = "40"
+
+[node name="ClearButton" type="Button" parent="VBoxContainer/Bottom" unique_id=1079697909]
+layout_mode = 2
+text = "Clear"
+
+[node name="SelectRegion" type="Button" parent="VBoxContainer/Bottom" unique_id=14128323]
+layout_mode = 2
+text = "SelectRegion"
+
+[node name="ApplyButton" type="Button" parent="VBoxContainer/Bottom" unique_id=1750461420]
+layout_mode = 2
+text = "Apply"
+
+[node name="BlurLabel" type="Label" parent="VBoxContainer/Bottom" unique_id=1381047532]
+layout_mode = 2
+text = "Blur:"
+
+[node name="BlurSize" type="HSlider" parent="VBoxContainer/Bottom" unique_id=1506867362]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+max_value = 32.0
+step = 2.0
+
+[node name="BlurValue" type="Label" parent="VBoxContainer/Bottom" unique_id=950634333]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+text = "0"
+
+[node name="OutputSize" type="HSlider" parent="VBoxContainer/Bottom" unique_id=1264996840]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+min_value = 256.0
+max_value = 1280.0
+step = 64.0
+value = 512.0
+
+[node name="Label" type="Label" parent="VBoxContainer/Bottom/OutputSize" unique_id=1573262361]
+layout_mode = 1
+anchors_preset = -1
+offset_top = -25.0
+offset_right = 95.5
+offset_bottom = -2.0
+text = "OutputSize:"
+
+[node name="OutputValue" type="Label" parent="VBoxContainer/Bottom/OutputSize" unique_id=2096800174]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 0
+offset_left = 100.0
+offset_top = -25.0
+offset_right = 173.0
+offset_bottom = -1.0
+text = "512"
