@@ -2,14 +2,15 @@
 
 A lightweight GUI for [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp).
 
-GearDraw provides a simple desktop interface for local image generation without requiring a web service.
+GearDraw provides a simple desktop interface for local image generation.
 
 ## Features
 
 * Text-to-image generation
 * Image-to-image generation
 * Inpainting
-* Selectable inpaint regions
+* **Selectable inpaint regions** for refining small details, faces, hands, or other specific areas of an image
+
 * Adjustable mask brush and blur
 * Prompt presets
 * Generation history
@@ -21,31 +22,34 @@ GearDraw provides a simple desktop interface for local image generation without 
 ## Requirements
 
 * Windows 10/11
-* `stable-diffusion.cpp`
+* A **Windows binary release of stable-diffusion.cpp**
 * A compatible Stable Diffusion model
 
-## Installation
+GearDraw uses `stable-diffusion.cpp` as its generation backend. It does not include `stable-diffusion.cpp` or `sd-cli.exe`.
 
-GearDraw requires `sd-cli.exe` from [stable-diffusion.cpp].
+### Installation
 
-Download and install `stable-diffusion.cpp`, then place the GearDraw files in the **same folder as `sd-cli.exe`**.
+1. Download a Windows release of [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp/releases).
+2. Extract the entire stable-diffusion.cpp archive.
+3. Copy `GearDraw.exe` and `GearDraw.pck` into the same folder as `sd-cli.exe`.
 
-The folder should look like this:
+4. Start `GearDraw.exe`.
+
+Example:
 
 ```text
 stable-diffusion.cpp/
 ├── GearDraw.exe
 ├── GearDraw.pck
 ├── sd-cli.exe
-├── models/
-└── ...
+├── *.dll
+├── ...
+└── models/
+    └── your-model.safetensors
 ```
 
-Then simply run `GearDraw.exe`.
+GearDraw requires the stable-diffusion.cpp runtime and backend files that come with the downloaded binary release. `sd-cli.exe` should not be distributed separately from its accompanying files.
 
-GearDraw does not include Stable-Diffusion.cpp sd-cli.exe
-
-[Download stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp/releases)
 
 
 ## Backend
