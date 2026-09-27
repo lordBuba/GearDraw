@@ -29,7 +29,7 @@ GearDraw uses `stable-diffusion.cpp` as its generation backend. It does not incl
 
 ### Installation
 
-1. Download a Windows release of [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp/releases).
+1. Download a Windows release of [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp/releases/download/master-860-44dd137/sd-master-44dd137-bin-win-vulkan-x64.zip).
 2. Extract the entire stable-diffusion.cpp archive.
 3. Copy `GearDraw.exe` and `GearDraw.pck` into the same folder as `sd-cli.exe`.
 
@@ -44,8 +44,7 @@ stable-diffusion.cpp/
 ├── sd-cli.exe
 ├── *.dll
 ├── ...
-└── models/
-    └── your-model.safetensors
+
 ```
 
 GearDraw requires the stable-diffusion.cpp runtime and backend files that come with the downloaded binary release. `sd-cli.exe` should not be distributed separately from its accompanying files.

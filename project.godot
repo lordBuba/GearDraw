@@ -23,6 +23,10 @@ config/icon="uid://bfggey67q4xbw"
 
 GenerationCache="*uid://ex00b17a2e2s"
 
+[display]
+
+window/subwindows/embed_subwindows=false
+
 [dotnet]
 
 project/assembly_name="Stable diffusion cpp ui"

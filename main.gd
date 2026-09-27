@@ -119,19 +119,21 @@ func _open_inpaint():
 	if init_image == "":
 		console.append_text("Select image first\n")
 		return
-	print("INPAINT WINDOW: ", inpaint_window)
 	
 	if inpaint_window == null:
 		var scene = preload("res://InpaintWindow.tscn")
 		inpaint_window = scene.instantiate()
+		inpaint_window.main = self
+		
+		
+		
 		print("CREATED NEW INPAINT WINDOW")
-		add_child(inpaint_window)
+		get_tree().root.add_child(inpaint_window)
+		print("WINDOW MODE: ", inpaint_window.mode)
+		
 		inpaint_window.mask_saved.connect(_on_mask_saved)
 		inpaint_window.generate_inpaint.connect(_on_inpaint_generate)
-		console.append_text(
-			"Connections: "
-			+ str(inpaint_window.generate_inpaint.get_connections().size())
-			+ "\n")
+		
 
 	inpaint_window.setup(init_image)
 	inpaint_window.popup_centered()
@@ -512,6 +514,7 @@ func _on_image_file_dialog_selected(path):
 		img2img_texture.texture = texture
 func _on_clear_image_pressed():
 	init_image = ""
+	inpaint_mask = ""
 	img2img_texture.texture = null
 	img2img_texture.visible = false
 

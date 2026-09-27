@@ -38,6 +38,7 @@ var selection_end := Vector2.ZERO
 var original_image: Image
 var generation_selection_rect := Rect2()
 
+var main: Control
 
 func _ready():
 	var app_dir = OS.get_executable_path().get_base_dir()
@@ -65,8 +66,8 @@ func _ready():
 
 func _on_output_size_changed(value):
 	output_value.text = str(int(value))
-	get_parent()._on_width_changed(value)
-	get_parent()._on_height_changed(value)
+	main._on_width_changed(value)
+	main._on_height_changed(value)
 
 func _on_blur_size_changed(value):
 	blur_value.text = str(int(value))
@@ -520,16 +521,16 @@ func screen_to_image(pos: Vector2) -> Vector2:
 	return local_pos / scale
 
 func paste_result(result_path: String) -> bool:
-	get_parent().to_console("PASTE_RESULT START\n")
-	get_parent().to_console("PATH: " + result_path + "\n")
-	get_parent().to_console(
+	main.to_console("PASTE_RESULT START\n")
+	main.to_console("PATH: " + result_path + "\n")
+	main.to_console(
 		"RECT: " + str(generation_selection_rect) + "\n"
 	)
 
 	var result = Image.load_from_file(result_path)
 
 	if result.is_empty():
-		get_parent().to_console("RESULT EMPTY\n")
+		main.to_console("RESULT EMPTY\n")
 		return false
 
 	var target_size = Vector2i(
@@ -559,19 +560,19 @@ func paste_result(result_path: String) -> bool:
 
 	image_view.texture = ImageTexture.create_from_image(original_image)
 
-	get_parent().to_console("BLIT DONE\n")
+	main.to_console("BLIT DONE\n")
 
 	var output_path = get_next_edit_path()
 
 	var error = original_image.save_png(output_path)
 
 	if error != OK:
-		get_parent().to_console(
+		main.to_console(
 			"ERROR SAVE: " + str(error) + "\n"
 		)
 		return false
 
-	get_parent().to_console(
+	main.to_console(
 		"EDITED IMAGE SAVED: " + output_path + "\n"
 	)
 
