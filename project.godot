@@ -17,7 +17,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 config/name="GearDraw"
 run/main_scene="uid://dokpbhrian78w"
 config/features=PackedStringArray("4.7", "Forward Plus")
-config/icon="uid://bfggey67q4xbw"
+config/icon="uid://bkmi1tnjwlptm"
 
 [autoload]
 

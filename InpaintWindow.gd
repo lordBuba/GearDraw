@@ -156,15 +156,15 @@ func blur_mask(image: Image, radius: int) -> Image:
 
 func _toggle_selection_mode():
 	selection_mode = !selection_mode
-
-	if selection_mode:
-		select_region_button.text = "Cancel"
-		apply_button.text = "Generate"
-		_on_clear_pressed()
-	else:
-		select_region_button.text = "Select Region"
-		apply_button.text = "Apply"
-		selection_visual.visible = false
+	if !apply_button.disabled:
+		if selection_mode:
+			select_region_button.text = "Brush"
+			apply_button.text = "Generate"
+			_on_clear_pressed()
+		else:
+			select_region_button.text = "Select Region"
+			apply_button.text = "Apply"
+			selection_visual.visible = false
 		
 
 func _on_selection_input(event):
@@ -408,6 +408,7 @@ func draw_line_mask(from: Vector2, to: Vector2, paint: bool):
 func _on_apply_pressed():
 	if selection_mode:
 		_generate_inpaint()
+		apply_button.disabled = true
 		return
 
 	if mask_image == null:
@@ -526,10 +527,13 @@ func paste_result(result_path: String) -> bool:
 	main.to_console(
 		"RECT: " + str(generation_selection_rect) + "\n"
 	)
-
-	var result = Image.load_from_file(result_path)
-
-	if result.is_empty():
+	var result 
+	if result_path == "":
+		main.to_console("RESULT EMPTY\n")
+		return false
+	else:
+		result = Image.load_from_file(result_path)
+	if result == null:
 		main.to_console("RESULT EMPTY\n")
 		return false
 
@@ -565,7 +569,6 @@ func paste_result(result_path: String) -> bool:
 	var output_path = get_next_edit_path()
 
 	var error = original_image.save_png(output_path)
-
 	if error != OK:
 		main.to_console(
 			"ERROR SAVE: " + str(error) + "\n"
@@ -575,6 +578,7 @@ func paste_result(result_path: String) -> bool:
 	main.to_console(
 		"EDITED IMAGE SAVED: " + output_path + "\n"
 	)
+	image_path = output_path
 
 	return true
 	

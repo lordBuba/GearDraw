@@ -383,7 +383,7 @@ custom_minimum_size = Vector2(200, 20)
 layout_mode = 2
 size_flags_vertical = 1
 min_value = 256.0
-max_value = 1280.0
+max_value = 1600.0
 step = 64.0
 value = 512.0
 
@@ -392,7 +392,7 @@ custom_minimum_size = Vector2(200, 20)
 layout_mode = 2
 size_flags_vertical = 1
 min_value = 256.0
-max_value = 1280.0
+max_value = 1600.0
 step = 64.0
 value = 512.0
 

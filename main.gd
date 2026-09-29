@@ -105,7 +105,7 @@ func update_prompt_buttons():
 		normal.corner_radius_bottom_right = 5
 
 		var active = StyleBoxFlat.new()
-		active.bg_color = Color(0.3, 0.5, 0.8)
+		active.bg_color = Color(0.4, 0.4, 0.4)
 		active.corner_radius_top_left = 5
 		active.corner_radius_top_right = 5
 		active.corner_radius_bottom_left = 0
@@ -142,12 +142,13 @@ func _on_inpaint_generate(
 	image_path: String,
 	mask_path: String,
 	rect: Rect2):
-
+	
 	init_image = image_path
 	inpaint_mask = mask_path
 	inpaint_rect = rect
 
 	inpaint_selection_active = true
+	print("START FROM INPAINT")
 	generate()
 
 func _on_mask_saved(path):
@@ -291,6 +292,11 @@ func _on_strength_changed(value):
 	value_strength.text = str(float(value))
 
 func generate():
+	if model == "":
+		console.text += "error: model is not selected\n"
+		button_strat_gen.disabled = false
+		process_finished()
+		return
 	model = model_path.text
 	console.append_text("-----------------------------------------------\n")
 	console.append_text("start generation, model [" + model + "]\n")
@@ -299,19 +305,16 @@ func generate():
 	button_stop.disabled = false
 	stdout_buffer = ""
 	stderr_buffer = ""
-	$Panel/Container/ProgressBar.value = 0
+	$Panel/Container/ProgressBar.value = 10
 	$Panel/Container/ProgressBar.max_value = slider_steps.value
 	
-	if model == "":
-		console.text += "error: model is not selected\n"
-		button_strat_gen.disabled = false
-		return
 	
 	if not FileAccess.file_exists(model):
 		console.append_text("error: model file not found\n")
 		console.append_text("MODEL PATH: [" + model + "]\n")
 		console.append_text("ABS PATH: [" + ProjectSettings.globalize_path(model) + "]\n")
 		button_strat_gen.disabled = false
+		process_finished()
 		return
 	
 	current_output = get_next_image_path()
@@ -368,6 +371,7 @@ func generate():
 		)
 		button_strat_gen.disabled = false
 		button_stop.disabled = true
+		process_finished()
 		return
 	
 	console.append_text("PID: " + str(process["pid"]) + "\n")
@@ -457,6 +461,8 @@ func process_finished():
 	process = {}
 	button_strat_gen.disabled = false
 	button_stop.disabled = true
+	if inpaint_window != null and is_instance_valid(inpaint_window):
+		inpaint_window.apply_button.disabled = false
 	if FileAccess.file_exists(current_output):
 		var image = Image.load_from_file(current_output)
 		if not image.is_empty():
