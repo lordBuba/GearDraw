@@ -160,11 +160,13 @@ func _toggle_selection_mode():
 		if selection_mode:
 			select_region_button.text = "Brush"
 			apply_button.text = "Generate"
+			mask_view.modulate = Color(1, 1, 1, 0)
 			_on_clear_pressed()
 		else:
 			select_region_button.text = "Select Region"
 			apply_button.text = "Apply"
 			selection_visual.visible = false
+			mask_view.modulate = Color(1, 1, 1, 0.5)
 		
 
 func _on_selection_input(event):
@@ -235,10 +237,35 @@ func _update_selection_visual():
 
 func get_mask_rect() -> Rect2:
 	var margin = selection_rect.size.x * 0.15
+	var image_size = original_image.get_size()
+
+	var left_margin = margin
+	var top_margin = margin
+	var right_margin = margin
+	var bottom_margin = margin
+
+	# Левая грань касается края изображения
+	if selection_rect.position.x <= 0:
+		left_margin = 0
+
+	# Верхняя грань
+	if selection_rect.position.y <= 0:
+		top_margin = 0
+
+	# Правая грань
+	if selection_rect.position.x + selection_rect.size.x >= image_size.x:
+		right_margin = 0
+
+	# Нижняя грань
+	if selection_rect.position.y + selection_rect.size.y >= image_size.y:
+		bottom_margin = 0
 
 	return Rect2(
-		selection_rect.position + Vector2(margin, margin),
-		selection_rect.size - Vector2(margin * 2, margin * 2)
+		selection_rect.position + Vector2(left_margin, top_margin),
+		selection_rect.size - Vector2(
+			left_margin + right_margin,
+			top_margin + bottom_margin
+		)
 	)
 
 func show_mask_area():
@@ -493,6 +520,7 @@ func _generate_inpaint():
 	if error != OK:
 		push_error("Can't save inpaint mask")
 		return
+	_on_blur_size_changed(blur_slider.value)
 	generation_selection_rect = selection_rect
 	generate_inpaint.emit(
 	input_path,
@@ -522,7 +550,6 @@ func screen_to_image(pos: Vector2) -> Vector2:
 	return local_pos / scale
 
 func paste_result(result_path: String) -> bool:
-	main.to_console("PASTE_RESULT START\n")
 	main.to_console("PATH: " + result_path + "\n")
 	main.to_console(
 		"RECT: " + str(generation_selection_rect) + "\n"
@@ -578,7 +605,6 @@ func paste_result(result_path: String) -> bool:
 	main.to_console(
 		"EDITED IMAGE SAVED: " + output_path + "\n"
 	)
-	image_path = output_path
 
 	return true
 	

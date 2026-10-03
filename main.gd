@@ -34,6 +34,9 @@ extends Control
 @onready var rename_dialog = $Panel/RenameDialog
 @onready var rename_line_edit = $Panel/RenameDialog/LineEdit
 @onready var mask_rect = $Panel/image_to_image/Mask
+@onready var button_to_image_result = $Panel/ColorRect/BtuttonPanel/VBoxContainer/img2img
+@onready var button_close_result = $Panel/ColorRect/BtuttonPanel/VBoxContainer/Clear
+@onready var timer = $Timer
 
 var prompt_popup = PopupMenu.new()
 var prompt_popup_index = -1
@@ -46,11 +49,15 @@ var current_generation_id = -1
 var stdout_buffer = ""
 var stderr_buffer = ""
 var init_image = ""
+var init_image_inp = ""
 var inpaint_mask := ""
 var inpaint_window
 var inpaint_rect := Rect2()
 var inpaint_selection_active := false
 var active_prompt_preset := -1
+var start_time := 0.0
+
+
 
 func _ready():
 	button_strat_gen.pressed.connect(generate)
@@ -75,10 +82,19 @@ func _ready():
 	rename_dialog.confirmed.connect(_on_rename_confirmed)
 	$Panel/image_to_image/InpaintButton.pressed.connect(_open_inpaint)
 	prompt.text_changed.connect(_on_prompt_changed)
+	button_to_image_result.pressed.connect(_on_result_to_image)
+	button_close_result.pressed.connect(_on_close_result)
 	
 	load_last_generation()
 	load_prompt_buttons()
 	
+
+func _on_close_result():
+	new_image.texture = null
+
+func _on_result_to_image():
+	if current_output!="" and FileAccess.file_exists(current_output):
+		_on_image_file_dialog_selected(current_output)
 
 func _on_prompt_changed():
 	if active_prompt_preset == -1:
@@ -143,7 +159,7 @@ func _on_inpaint_generate(
 	mask_path: String,
 	rect: Rect2):
 	
-	init_image = image_path
+	init_image_inp = image_path
 	inpaint_mask = mask_path
 	inpaint_rect = rect
 
@@ -291,16 +307,17 @@ func _on_cfg_changed(value):
 func _on_strength_changed(value):
 	value_strength.text = str(float(value))
 
+		
 func generate():
+	console.append_text("-----------------------------------------------\n")
+	console.append_text("start generation, model [" + model + "]\n")
+	model = model_path.text
 	if model == "":
 		console.text += "error: model is not selected\n"
 		button_strat_gen.disabled = false
 		process_finished()
 		return
-	model = model_path.text
-	console.append_text("-----------------------------------------------\n")
-	console.append_text("start generation, model [" + model + "]\n")
-	
+	start_time = Time.get_ticks_msec()/1000.0
 	button_strat_gen.disabled = true
 	button_stop.disabled = false
 	stdout_buffer = ""
@@ -333,7 +350,10 @@ func generate():
 		]
 	if init_image != "":
 		arguments.append("--init-img")
-		arguments.append(init_image)
+		if inpaint_selection_active:
+			arguments.append(init_image_inp)
+		else:
+			arguments.append(init_image)
 		arguments.append("--strength")
 		arguments.append(str(slider_strength.value))
 	
@@ -385,9 +405,16 @@ func stop_generation():
 	console.append_text("\nGeneration stopped\n")
 	process = {}
 	button_strat_gen.disabled = false
+	button_strat_gen.text = "Generate"
 	button_stop.disabled = true
+	finish_inpaint_rigeon()
 
 func _process(_delta: float):
+	if button_strat_gen.disabled:
+		var elapsed_time: float = (Time.get_ticks_msec()/1000.0)-start_time
+		var minutes: int = int(elapsed_time)/60
+		var seconds: int = int(elapsed_time)%60
+		button_strat_gen.text = "%02d:%02d" % [minutes, seconds]
 	if process.is_empty():
 		return
 	# $Panel/outText.text += ".......\n"
@@ -459,7 +486,12 @@ func get_next_image_path() -> String:
 
 func process_finished():
 	process = {}
+	var last
+	if current_output != "":
+		last = button_strat_gen.text
 	button_strat_gen.disabled = false
+	if current_output != "":
+		button_strat_gen.text = "Generate (" + last + ")"
 	button_stop.disabled = true
 	if inpaint_window != null and is_instance_valid(inpaint_window):
 		inpaint_window.apply_button.disabled = false
@@ -487,7 +519,9 @@ func process_finished():
 			current_generation_id,
 			"failed"
 		)
+	finish_inpaint_rigeon()
 
+func finish_inpaint_rigeon():
 	if inpaint_selection_active == true:
 		inpaint_selection_active = false
 

@@ -76,12 +76,12 @@ text = "Prompt:"
 [node name="addImage" type="Button" parent="Panel/Prompt" unique_id=718544370]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 1.0
-anchor_right = 1.0
-anchor_bottom = 0.009000001
-offset_right = 34.0
-offset_bottom = 30.028
-text = "🖼️"
+anchor_left = 1.0070001
+anchor_right = 1.0070001
+offset_left = 0.023925781
+offset_right = 30.023926
+offset_bottom = 47.0
+text = "🖼"
 
 [node name="ImageFileDialog" type="FileDialog" parent="Panel" unique_id=202867767]
 oversampling_override = 1.0
@@ -123,32 +123,63 @@ layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.007
 anchor_top = 0.52000004
-anchor_right = 0.5
-anchor_bottom = 0.9850001
+anchor_right = 0.48000002
+anchor_bottom = 0.98300004
 offset_left = -0.05700016
 offset_top = -0.960022
-offset_right = 0.5
-offset_bottom = -0.2800293
+offset_right = 23.519958
+offset_bottom = 1.0159912
 color = Color(0.172, 0.2, 0.172, 1)
 
 [node name="TextureRect" type="TextureRect" parent="Panel/ColorRect" unique_id=434599902]
 layout_mode = 1
 anchors_preset = -1
-anchor_right = 1.0
+anchor_right = 0.95800006
 anchor_bottom = 1.0
+offset_right = -0.15203857
 grow_vertical = 2
 expand_mode = 1
 stretch_mode = 5
+
+[node name="BtuttonPanel" type="ColorRect" parent="Panel/ColorRect" unique_id=1840628201]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.95800006
+anchor_top = 1.0
+anchor_right = 0.95800006
+anchor_bottom = 1.0
+offset_left = -0.14404297
+offset_top = -106.0
+offset_right = 27.855957
+color = Color(0.15127608, 0.15127608, 0.15127608, 1)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/ColorRect/BtuttonPanel" unique_id=1832268180]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 0.99700004
+offset_bottom = -0.10601807
+alignment = 2
+
+[node name="img2img" type="Button" parent="Panel/ColorRect/BtuttonPanel/VBoxContainer" unique_id=1215973383]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "🖽"
+
+[node name="Clear" type="Button" parent="Panel/ColorRect/BtuttonPanel/VBoxContainer" unique_id=1309082009]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "🖾"
 
 [node name="image_to_image" type="TextureRect" parent="Panel" unique_id=1623499887]
 visible = false
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.53000003
+anchor_left = 0.537
 anchor_top = 0.056
 anchor_right = 0.97
 anchor_bottom = 0.409
-offset_left = -0.030029297
+offset_left = -0.0869751
 offset_top = -0.288002
 offset_right = -0.47009277
 offset_bottom = -0.03201294
@@ -181,7 +212,7 @@ offset_right = 69.984
 offset_bottom = 19.893997
 grow_vertical = 0
 theme_override_font_sizes/normal_font_size = 14
-text = "Strength"
+text = "Strength:"
 fit_content = true
 scroll_active = false
 vertical_alignment = 1
@@ -190,13 +221,13 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(50, 20)
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.09900001
+anchor_left = -0.039
 anchor_top = 1.044
-anchor_right = 0.462
+anchor_right = -0.039
 anchor_bottom = 1.044
-offset_left = -0.09400177
+offset_left = 68.630005
 offset_top = -0.07600403
-offset_right = 0.22799683
+offset_right = 213.422
 offset_bottom = 20.374008
 size_flags_vertical = 1
 min_value = 0.05
@@ -209,13 +240,13 @@ custom_minimum_size = Vector2(40, 20)
 custom_maximum_size = Vector2(40, 20)
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.462
+anchor_left = -0.039
 anchor_top = 1.044
-anchor_right = 0.462
+anchor_right = -0.039
 anchor_bottom = 1.044
-offset_left = 0.22799683
+offset_left = 228.42198
 offset_top = -0.07600403
-offset_right = 40.227997
+offset_right = 268.422
 offset_bottom = 19.923996
 text = "0.75"
 fit_content = true
@@ -229,19 +260,19 @@ anchors_preset = -1
 offset_left = -3.0040741e-05
 offset_right = 21.999937
 offset_bottom = 25.0
-theme_override_font_sizes/font_size = 12
-text = "X"
+theme_override_font_sizes/font_size = 19
+text = "❌"
 
 [node name="InpaintButton" type="Button" parent="Panel/image_to_image" unique_id=358334278]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.58100003
+anchor_left = -0.039
 anchor_top = 1.044
-anchor_right = 0.58100003
+anchor_right = -0.039
 anchor_bottom = 1.044
-offset_left = -0.98602295
+offset_left = 285.422
 offset_top = -0.07600403
-offset_right = 49.013977
+offset_right = 335.422
 offset_bottom = 24.923996
 theme_override_font_sizes/font_size = 12
 text = "Inpaint"
@@ -267,13 +298,13 @@ access = 2
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.521
-anchor_top = 0.97
-anchor_right = 0.98300004
-anchor_bottom = 0.97
+anchor_top = 0.98300004
+anchor_right = 0.98700005
+anchor_bottom = 0.98300004
 offset_left = 0.3289795
-offset_top = -322.56
-offset_right = 4.5668945
-offset_bottom = -291.56
+offset_top = -330.984
+offset_right = -0.037109375
+offset_bottom = -299.984
 
 [node name="ModelPath" type="LineEdit" parent="Panel/HSplitContainer" unique_id=1662308471]
 custom_minimum_size = Vector2(0, 30)
@@ -285,19 +316,19 @@ placeholder_text = "path to model"
 custom_minimum_size = Vector2(40, 30)
 custom_maximum_size = Vector2(40, 30)
 layout_mode = 2
-text = "..."
+text = "🗀"
 
 [node name="HSplitContainer2" type="HSplitContainer" parent="Panel" unique_id=1748708986]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.521
-anchor_top = 0.97
-anchor_right = 0.98300004
-anchor_bottom = 0.97
+anchor_top = 0.98300004
+anchor_right = 0.98700005
+anchor_bottom = 0.98300004
 offset_left = 0.3289795
-offset_top = -288.56
-offset_right = 4.5668945
-offset_bottom = -257.56
+offset_top = -296.984
+offset_right = -0.037109375
+offset_bottom = -265.984
 
 [node name="LoraPath" type="LineEdit" parent="Panel/HSplitContainer2" unique_id=1866543320]
 custom_minimum_size = Vector2(0, 30)
@@ -309,19 +340,19 @@ placeholder_text = "path to loras folder "
 custom_minimum_size = Vector2(40, 30)
 custom_maximum_size = Vector2(40, 30)
 layout_mode = 2
-text = "..."
+text = "🗀"
 
 [node name="HContainer" type="HSplitContainer" parent="Panel" unique_id=1648033722]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.521
-anchor_top = 0.96900004
+anchor_top = 0.98300004
 anchor_right = 0.98700005
-anchor_bottom = 0.96900004
+anchor_bottom = 0.98300004
 offset_left = 5.3289795
-offset_top = -250.91205
+offset_top = -259.984
 offset_right = -0.037109375
-offset_bottom = -125.91205
+offset_bottom = -134.98401
 split_offsets = PackedInt32Array(128, 340)
 split_offset = 128
 
@@ -479,13 +510,13 @@ text = "Random"
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.521
-anchor_top = 0.96900004
-anchor_right = 0.9850001
-anchor_bottom = 0.96900004
+anchor_top = 0.98300004
+anchor_right = 0.98700005
+anchor_bottom = 0.98300004
 offset_left = 0.3289795
-offset_top = -125.91205
-offset_right = 0.26489258
-offset_bottom = -85.91205
+offset_top = -134.98401
+offset_right = -2.0371094
+offset_bottom = -94.98401
 split_offsets = PackedInt32Array(0, 0)
 
 [node name="Generate" type="Button" parent="Panel/Container" unique_id=322572162]
@@ -514,13 +545,13 @@ offset_transform_pivot_ratio = Vector2(0.5, 0)
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.521
-anchor_top = 0.96900004
+anchor_top = 0.9850001
 anchor_right = 0.98700005
-anchor_bottom = 0.96900004
+anchor_bottom = 0.9850001
 offset_left = 0.3289795
-offset_top = -85.91205
+offset_top = -96.28003
 offset_right = -0.037109375
-offset_bottom = 0.08795166
+offset_bottom = -0.2800293
 color = Color(0.13333334, 0.13333334, 0.13333334, 1)
 
 [node name="outText" type="RichTextLabel" parent="Panel/panel_out" unique_id=604622067]
@@ -529,7 +560,7 @@ anchors_preset = -1
 anchor_right = 1.0
 anchor_bottom = 0.98800004
 offset_left = 5.0
-offset_bottom = 0.03199768
+offset_bottom = 0.1519928
 focus_mode = 2
 theme_override_font_sizes/normal_font_size = 12
 text = "console start: 
@@ -538,3 +569,8 @@ scroll_following = true
 scroll_following_visible_characters = true
 selection_enabled = true
 drag_and_drop_selection_enabled = false
+
+[node name="Timer" type="Timer" parent="." unique_id=1761907188]
+wait_time = 10.0
+one_shot = true
+ignore_time_scale = true
