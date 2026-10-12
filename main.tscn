@@ -81,7 +81,41 @@ anchor_right = 1.0070001
 offset_left = 0.023925781
 offset_right = 30.023926
 offset_bottom = 47.0
+tooltip_text = "Add image"
 text = "🖼"
+
+[node name="LoraButton" type="Button" parent="Panel/Prompt" unique_id=2137993936]
+custom_minimum_size = Vector2(45, 14)
+custom_maximum_size = Vector2(45, 14)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -45.0
+offset_top = 1.0
+offset_right = -2.0
+offset_bottom = 21.0
+text = "Lora"
+
+[node name="LoraPopup" type="PopupPanel" parent="Panel/Prompt/LoraButton" unique_id=1713754104]
+oversampling_override = 1.0
+size = Vector2i(450, 400)
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel/Prompt/LoraButton/LoraPopup" unique_id=1975933735]
+anchors_preset = -1
+anchor_left = 5.7500005
+anchor_top = 2.0600002
+anchor_right = 5.76
+anchor_bottom = 2.0600002
+offset_left = -2583.5002
+offset_top = -820.00006
+offset_right = -2146.0
+offset_bottom = -428.00006
+
+[node name="LoraList" type="VBoxContainer" parent="Panel/Prompt/LoraButton/LoraPopup/ScrollContainer" unique_id=906246646]
+layout_mode = 2
 
 [node name="ImageFileDialog" type="FileDialog" parent="Panel" unique_id=202867767]
 oversampling_override = 1.0
@@ -161,13 +195,21 @@ anchor_bottom = 0.99700004
 offset_bottom = -0.10601807
 alignment = 2
 
+[node name="explorer" type="Button" parent="Panel/ColorRect/BtuttonPanel/VBoxContainer" unique_id=468143431]
+layout_mode = 2
+tooltip_text = "Show outputs folder"
+theme_override_font_sizes/font_size = 14
+text = "🗁"
+
 [node name="img2img" type="Button" parent="Panel/ColorRect/BtuttonPanel/VBoxContainer" unique_id=1215973383]
 layout_mode = 2
+tooltip_text = "Send to img2img"
 theme_override_font_sizes/font_size = 14
 text = "🖽"
 
 [node name="Clear" type="Button" parent="Panel/ColorRect/BtuttonPanel/VBoxContainer" unique_id=1309082009]
 layout_mode = 2
+tooltip_text = "Close result"
 theme_override_font_sizes/font_size = 14
 text = "🖾"
 
@@ -517,7 +559,16 @@ offset_left = 0.3289795
 offset_top = -134.98401
 offset_right = -2.0371094
 offset_bottom = -94.98401
-split_offsets = PackedInt32Array(0, 0)
+split_offsets = PackedInt32Array(178, 390, 462)
+split_offset = 178
+
+[node name="ServerButton" type="Button" parent="Panel/Container" unique_id=665813859]
+custom_minimum_size = Vector2(30, 30)
+custom_maximum_size = Vector2(30, 30)
+layout_mode = 2
+tooltip_text = "Start/Restart server"
+theme_override_font_sizes/font_size = 20
+text = "▶"
 
 [node name="Generate" type="Button" parent="Panel/Container" unique_id=322572162]
 custom_minimum_size = Vector2(200, 30)
@@ -567,6 +618,7 @@ text = "console start:
 "
 scroll_following = true
 scroll_following_visible_characters = true
+context_menu_enabled = true
 selection_enabled = true
 drag_and_drop_selection_enabled = false
 
@@ -574,3 +626,9 @@ drag_and_drop_selection_enabled = false
 wait_time = 10.0
 one_shot = true
 ignore_time_scale = true
+
+[node name="HTTPRequest" type="HTTPRequest" parent="." unique_id=282312408]
+
+[node name="HTTPRequestPoll" type="HTTPRequest" parent="." unique_id=285785825]
+
+[node name="HTTPRequestCancel" type="HTTPRequest" parent="." unique_id=986308600]

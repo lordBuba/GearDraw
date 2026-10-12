@@ -6,7 +6,8 @@ var data = {
 	"version": 1,
 	"next_id": 0,
 	"generations": [],
-	"prompts": []
+	"prompts": [],
+	"active_prompt_preset": 0
 }
 func add_prompt(_name, prompt):
 	data["prompts"].append({
@@ -50,9 +51,14 @@ func load_cache():
 
 	if typeof(json.data) == TYPE_DICTIONARY:
 		data = json.data
+
 	if not data.has("prompts"):
 		data["prompts"] = []
-		save_cache()
+
+	if not data.has("active_prompt_preset"):
+		data["active_prompt_preset"] = 0
+
+	save_cache()
 
 func save_cache():
 	var file = FileAccess.open(cache_file, FileAccess.WRITE)

@@ -520,7 +520,7 @@ func _generate_inpaint():
 	if error != OK:
 		push_error("Can't save inpaint mask")
 		return
-	_on_blur_size_changed(blur_slider.value)
+	_on_output_size_changed(output_size.value)
 	generation_selection_rect = selection_rect
 	generate_inpaint.emit(
 	input_path,
