@@ -1,6 +1,8 @@
 [gd_scene format=3 uid="uid://dokpbhrian78w"]
 
 [ext_resource type="Script" uid="uid://b06481nlngqjp" path="res://main.gd" id="1_h2yge"]
+[ext_resource type="PackedScene" uid="uid://cr7kuubgjqic0" path="res://ArgumentsWindow.tscn" id="2_0xm2m"]
+[ext_resource type="PackedScene" uid="uid://bmrqs6pv02u5d" path="res://UpscaleWindow.tscn" id="3_h2yge"]
 
 [node name="Control" type="Control" unique_id=621909228]
 layout_mode = 3
@@ -109,10 +111,10 @@ anchor_left = 5.7500005
 anchor_top = 2.0600002
 anchor_right = 5.76
 anchor_bottom = 2.0600002
-offset_left = -2583.5002
-offset_top = -820.00006
-offset_right = -2146.0
-offset_bottom = -428.00006
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 446.0
+offset_bottom = 396.0
 
 [node name="LoraList" type="VBoxContainer" parent="Panel/Prompt/LoraButton/LoraPopup/ScrollContainer" unique_id=906246646]
 layout_mode = 2
@@ -319,6 +321,20 @@ offset_bottom = 24.923996
 theme_override_font_sizes/font_size = 12
 text = "Inpaint"
 
+[node name="UpscaleButton" type="Button" parent="Panel/image_to_image" unique_id=1838612546]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = -0.039
+anchor_top = 1.044
+anchor_right = -0.039
+anchor_bottom = 1.044
+offset_left = 350.422
+offset_top = -0.07600403
+offset_right = 400.422
+offset_bottom = 24.923996
+theme_override_font_sizes/font_size = 12
+text = "Upscale"
+
 [node name="ModelFileDialog" type="FileDialog" parent="Panel" unique_id=535444763]
 oversampling_override = 1.0
 title = "Open a File"
@@ -347,6 +363,14 @@ offset_left = 0.3289795
 offset_top = -330.984
 offset_right = -0.037109375
 offset_bottom = -299.984
+split_offsets = PackedInt32Array(403, 483)
+split_offset = 403
+
+[node name="arguments" type="Button" parent="Panel/HSplitContainer" unique_id=1361461300]
+custom_minimum_size = Vector2(30, 30)
+custom_maximum_size = Vector2(30, 30)
+layout_mode = 2
+text = "⚙"
 
 [node name="ModelPath" type="LineEdit" parent="Panel/HSplitContainer" unique_id=1662308471]
 custom_minimum_size = Vector2(0, 30)
@@ -546,7 +570,7 @@ custom_minimum_size = Vector2(0, 20)
 custom_maximum_size = Vector2(-1, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 11
-text = "Random"
+text = "🎲"
 
 [node name="Container" type="HSplitContainer" parent="Panel" unique_id=967061494]
 layout_mode = 1
@@ -632,3 +656,9 @@ ignore_time_scale = true
 [node name="HTTPRequestPoll" type="HTTPRequest" parent="." unique_id=285785825]
 
 [node name="HTTPRequestCancel" type="HTTPRequest" parent="." unique_id=986308600]
+
+[node name="ArgumentsWindow" parent="." unique_id=628747329 instance=ExtResource("2_0xm2m")]
+visible = false
+
+[node name="UpscaleWindow" parent="." unique_id=1619085295 instance=ExtResource("3_h2yge")]
+visible = false

@@ -7,7 +7,9 @@ var data = {
 	"next_id": 0,
 	"generations": [],
 	"prompts": [],
-	"active_prompt_preset": 0
+	"active_prompt_preset": 0,
+	"extra_arguments": "",
+	"server_arguments": ""
 }
 func add_prompt(_name, prompt):
 	data["prompts"].append({
@@ -57,7 +59,12 @@ func load_cache():
 
 	if not data.has("active_prompt_preset"):
 		data["active_prompt_preset"] = 0
-
+	
+	if not data.has("extra_arguments"):
+		data["extra_arguments"] = ""
+	
+	if not data.has("server_arguments"):
+		data["server_arguments"] = ""
 	save_cache()
 
 func save_cache():

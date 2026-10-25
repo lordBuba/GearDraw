@@ -1,6 +1,7 @@
 extends Control
 
 #signal generate_inpaint(image_path, mask_path, selection_rect)
+
 @onready var http_request = $HTTPRequest
 @onready var http_request_poll = $HTTPRequestPoll
 @onready var http_request_cancel = $HTTPRequestCancel
@@ -45,6 +46,10 @@ extends Control
 @onready var lora_button = $Panel/Prompt/LoraButton
 @onready var lora_popup = $Panel/Prompt/LoraButton/LoraPopup
 @onready var lora_list = $Panel/Prompt/LoraButton/LoraPopup/ScrollContainer/LoraList
+@onready var arguments_window = $ArgumentsWindow
+@onready var arguments_button = $Panel/HSplitContainer/arguments
+@onready var upscale_window = $UpscaleWindow
+@onready var button_open_upscale = $Panel/image_to_image/UpscaleButton
 
 var prompt_popup = PopupMenu.new()
 var prompt_popup_index = -1
@@ -71,6 +76,15 @@ var current_job_id := ""
 var progress_regex = RegEx.new()
 
 var is_load_lora = false
+
+var extra_arguments := ""
+var server_arguments := ""
+
+var upscale_active := false
+var upscale_tiles: Array = []
+var upscale_tile_index := 0
+var upscale_settings: Dictionary = {}
+var upscale_result: Image
 
 func _ready():
 	button_strat_gen.pressed.connect(generate)
@@ -110,9 +124,24 @@ func _ready():
 	
 	progress_regex.compile("(\\d+)/(\\d+)")
 	
+	arguments_button.pressed.connect(func():
+		arguments_window.popup_centered())
+	arguments_window.arguments_applied.connect(func(value: String):
+		extra_arguments = value
+		GenerationCache.data["extra_arguments"] = value
+		GenerationCache.save_cache())
+	
+	arguments_window.arguments_applied.connect(func(value: String):
+		extra_arguments = value
+		server_arguments = arguments_window.server_arguments_edit.text)
+	
+	button_open_upscale.pressed.connect(_on_open_upscale_pressed)
+	upscale_window.upscale_requested.connect(_on_upscale_requested)
+	
 	load_last_generation()
 	load_prompt_buttons()
-	
+	load_extra_arguments()
+	load_server_arguments()
 	await get_tree().process_frame
 	if model == "":
 		print("Model is not saved")
@@ -122,6 +151,150 @@ func _ready():
 		return
 	start_sd_server(model)
 	
+
+func finish_upscale():
+	var output_path = init_image.get_base_dir().path_join(
+		init_image.get_file().get_basename() + "_upscaled.png"
+	)
+
+	var error = upscale_result.save_png(output_path)
+
+	if error == OK:
+		console.append_text("Upscale завершён: " + output_path + "\n")
+
+		new_image.texture = ImageTexture.create_from_image(upscale_result)
+	else:
+		console.append_text("Ошибка сохранения Upscale: " + str(error) + "\n")
+
+	upscale_active = false
+	upscale_tiles.clear()
+	upscale_tile_index = 0
+	current_job_id = ""
+
+	process_finished()
+
+func split_into_tiles(image: Image, tile_size: int, overlap_size: int) -> Array:
+	var tiles: Array = []
+	var step = tile_size - overlap_size
+
+	if step <= 0:
+		push_error("Overlap > Tile Size")
+		return tiles
+
+	for y in range(0, image.get_height(), step):
+		for x in range(0, image.get_width(), step):
+			var rect = Rect2i(
+				x, y,
+				min(tile_size, image.get_width() - x),
+				min(tile_size, image.get_height() - y)
+			)
+
+			var tile = Image.create(
+				rect.size.x, rect.size.y, false, image.get_format()
+			)
+			tile.blit_rect(image, rect, Vector2i.ZERO)
+
+			tiles.append({
+				"image": tile,
+				"x": x,
+				"y": y
+			})
+
+	return tiles
+func send_upscale_tile():
+	console.append_text(
+		"Upscale: send %d / %d\n" % [
+			upscale_tile_index + 1,
+			upscale_tiles.size()
+		]
+	)
+	if upscale_tile_index >= upscale_tiles.size():
+		finish_upscale()
+		return
+
+	var tile_data: Dictionary = upscale_tiles[upscale_tile_index]
+	var tile: Image = tile_data["image"]
+
+	var tile_bytes = tile.save_png_to_buffer()
+	var tile_b64 = Marshalls.raw_to_base64(tile_bytes)
+
+	var request_data = {
+		"prompt": prompt.text,
+		"negative_prompt": negative_prompt.text,
+		"clip_skip": -1,
+		"width": tile.get_width(),
+		"height": tile.get_height(),
+		"strength": float(upscale_settings["strength"]),
+		"seed": int(line_seed.text),
+		"batch_count": 1,
+		"init_image": tile_b64,
+		"mask_image": null,
+		"lora": build_lora_array(),
+		"sample_params": {
+			"sample_steps": int(slider_steps.value),
+			"guidance": {"txt_cfg": float(slider_cfg.value)},
+			"shifted_timestep": 0,
+			"custom_sigmas": []
+		},
+		"output_format": "png"
+	}
+
+	var body = JSON.stringify(request_data)
+	var error = http_request.request(
+		"http://127.0.0.1:1234/sdcpp/v1/img_gen",
+		["Content-Type: application/json"],
+		HTTPClient.METHOD_POST,
+		body
+	)
+
+	if error != OK:
+		console.append_text("Ошибка отправки тайла: " + str(error) + "\n")
+		finish_upscale()
+func _on_upscale_requested(settings: Dictionary):
+	if upscale_active:
+		return
+
+	upscale_settings = settings
+	upscale_active = true
+	upscale_tile_index = 0
+
+	var source = upscale_window.source_image
+	var scale_factor = int(settings["scale"])
+
+	upscale_result = source.duplicate()
+	upscale_result.resize(
+		source.get_width() * scale_factor,
+		source.get_height() * scale_factor,
+		Image.INTERPOLATE_LANCZOS
+	)
+
+	upscale_tiles = split_into_tiles(
+		upscale_result,
+		int(settings["tile_size"]),
+		int(settings["overlap"])
+	)
+
+	console.append_text(
+		"Upscale: подготовлено тайлов: "
+		+ str(upscale_tiles.size()) + "\n"
+	)
+	if upscale_tiles.is_empty():
+		upscale_active = false
+		return
+	send_upscale_tile()
+
+func _on_open_upscale_pressed():
+	if init_image == "":
+		console.append_text("error image path.\n")
+		return
+
+	var image = Image.load_from_file(init_image)
+	if image.is_empty():
+		console.append_text("error image.\n")
+		return
+
+	upscale_window.set_image(image)
+	upscale_window.popup_centered()
 
 func get_lora_settings() -> Array:
 	var result: Array = []
@@ -221,8 +394,6 @@ func add_lora_row(lora_name: String):
 	checkbox.text = lora_name
 	checkbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	checkbox.add_theme_icon_override("unchecked", preload("res://checkbox_unchecked.png"))
-	#var minus = Button.new()
-	#minus.text = "−"
 
 	var weight = SpinBox.new()
 	weight.min_value = -5.0
@@ -231,16 +402,6 @@ func add_lora_row(lora_name: String):
 	weight.value = 1.0
 	weight.custom_minimum_size.x = 50
 	checkbox.set_meta("weight_control", weight)
-	#var plus = Button.new()
-	#plus.text = "+"
-
-	#minus.pressed.connect(func():
-		#weight.value = maxf(-2.0, weight.value - 0.1)
-	#)
-#
-	#plus.pressed.connect(func():
-		#weight.value = minf(2.0, weight.value + 0.1)
-	#)
 
 	row.add_child(checkbox)
 	#row.add_child(minus)
@@ -275,11 +436,9 @@ func _on_request_completed(
 	console.append_text("========== HTTP RESPONSE ==========\n")
 	console.append_text("RESULT: " + str(result) + "\n")
 	console.append_text("CODE: " + str(response_code) + "\n")
-	#console.append_text("BODY:\n")
-	#console.append_text(body.get_string_from_utf8() + "\n")
 
 	var response = JSON.parse_string(body.get_string_from_utf8())
-
+	#console.append_text("RESPONSE PARSED: " + str(response) + "\n")
 	if response != null and response.has("poll_url"):
 		console.append_text(
 			"POLL URL: " + response["poll_url"] + "\n"
@@ -299,9 +458,6 @@ func _on_poll_completed(
 	response_code: int,
 	headers: PackedStringArray,
 	body: PackedByteArray):
-	#console.append_text("========== POLL RESPONSE ==========\n")
-	#console.append_text("RESULT: " + str(result) + "\n")
-	#console.append_text("CODE: " + str(response_code) + "\n")
 	
 	var response = JSON.parse_string(body.get_string_from_utf8())
 
@@ -350,6 +506,26 @@ func _on_poll_completed(
 
 			if error != OK:
 				return
+			
+			if upscale_active:
+				var tile_data: Dictionary = upscale_tiles[upscale_tile_index]
+				var rect = Rect2i(0, 0, image.get_width(), image.get_height())
+
+				upscale_result.blit_rect(
+				image,
+				rect,
+				Vector2i(int(tile_data["x"]), int(tile_data["y"])))
+
+				upscale_tile_index += 1
+				current_job_id = ""
+
+				console.append_text(
+				"Upscale: тайл %d из %d готов\n" % [
+				upscale_tile_index,
+				upscale_tiles.size()])
+
+				send_upscale_tile()
+				return
 
 			var texture = ImageTexture.create_from_image(image)
 			new_image.texture = texture
@@ -366,7 +542,7 @@ func _on_poll_completed(
 	
 
 func poll_generation(job_id: String):
-	if current_generation_id == -1:
+	if current_generation_id == -1 and not upscale_active:
 		return
 	#console.append_text("START POLLING: " + job_id + "\n")
 
@@ -417,6 +593,13 @@ func start_sd_server(_model: String):
 		arguments.append("--lora-model-dir")
 		arguments.append(lora)
 
+	# Дополнительные аргументы сервера
+	var extra_args = server_arguments.strip_edges()
+
+	if extra_args != "":
+		var parsed_args = extra_args.split(" ", false)
+		arguments.append_array(parsed_args)
+
 	server_process = OS.execute_with_pipe(server, arguments, false)
 
 	if server_process.is_empty():
@@ -426,7 +609,8 @@ func start_sd_server(_model: String):
 	console.append_text(
 		"sd-server started, PID: "
 		+ str(server_process["pid"])
-		+ "\n")
+		+ "\n"
+	)
 
 	button_restart_server.text = "↻"
 
@@ -440,8 +624,7 @@ func update_generation_progress(text: String):
 			var total_steps = result.get_string(2).to_int()
 			$Panel/Container/ProgressBar.max_value = total_steps
 			$Panel/Container/ProgressBar.value = current_step
-			# Здесь обновляем UI (например, ProgressBar)
-			# $ProgressBar.value
+
 func read_pipe(pipe: FileAccess) -> String:
 	if pipe == null:
 		return ""
@@ -567,6 +750,14 @@ func load_prompt_buttons():
 		var button = Button.new()
 		button.text = preset.get("name", "Prompt " + str(i + 1))
 
+		button.gui_input.connect(
+			func(event):
+				if event is InputEventMouseButton:
+					if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+						prompt_popup_index = i
+						prompt_popup.position = DisplayServer.mouse_get_position()
+						prompt_popup.popup())
+		
 		button.pressed.connect(func():
 			active_prompt_preset = i
 			GenerationCache.data["active_prompt_preset"] = i
@@ -574,16 +765,10 @@ func load_prompt_buttons():
 			GenerationCache.save_cache()
 			update_prompt_buttons())
 
-		button.pressed.connect(func():
-			active_prompt_preset = i
-			prompt.text = GenerationCache.data["prompts"][i].get("prompt", "")
-			update_prompt_buttons()
-		)
-
 		prompt_presets.add_child(button)
 
 	var add_button = Button.new()
-	add_button.text = "+"
+	add_button.text = " + "
 	add_button.pressed.connect(add_prompt_preset)
 	prompt_presets.add_child(add_button)
 
@@ -655,7 +840,7 @@ func _on_rename_confirmed():
 	GenerationCache.save_cache()
 
 	load_prompt_buttons()
-
+	update_prompt_buttons()
 	prompt_popup_index = -1
 
 func _on_select_lora_pressed():
@@ -783,7 +968,32 @@ func generate():
 		#return
 	console.append_text(JSON.stringify(build_lora_array()))
 	console.append_text("OUTPUT: " + current_output + "\n")
-	var body = JSON.stringify({
+	#var body = JSON.stringify({
+	#"prompt": prompt.text,
+	#"negative_prompt": negative_prompt.text,
+	#"clip_skip": -1,
+	#"width": int(slider_width.value),
+	#"height": int(slider_height.value),
+	#"strength": slider_strength.value,
+	#"seed": int(line_seed.text),
+	#"batch_count": 1,
+	#"init_image": init_image_data,
+	#"mask_image": mask_data,
+	#"lora": build_lora_array(),
+	#"sample_params": {
+		#"sample_steps": int(slider_steps.value),
+		#"shifted_timestep": 0,
+		#"custom_sigmas": []},
+	#"output_format": "png",
+	#"vae_tiling_params": {
+		#"enabled": true,
+		#"tile_size_x": 0,
+		#"tile_size_y": 0,
+		#"target_overlap": 0.5,
+		#"rel_size_x": 0,
+		#"rel_size_y": 0	}})
+	
+	var request_data = {
 	"prompt": prompt.text,
 	"negative_prompt": negative_prompt.text,
 	"clip_skip": -1,
@@ -797,10 +1007,26 @@ func generate():
 	"lora": build_lora_array(),
 	"sample_params": {
 		"sample_steps": int(slider_steps.value),
+		"guidance": {
+			"txt_cfg": float(slider_cfg.value)},
 		"shifted_timestep": 0,
-		"custom_sigmas": []},
-	"output_format": "png"})
-	
+		"custom_sigmas": []
+	},
+	"output_format": "png",
+	"vae_tiling_params": {
+		"enabled": true,
+		"tile_size_x": 0,
+		"tile_size_y": 0,
+		"target_overlap": 0.5,
+		"rel_size_x": 0,
+		"rel_size_y": 0
+	}}
+	var extra_params = parse_extra_arguments()
+
+	for key in extra_params:
+		request_data[key] = extra_params[key]
+
+	var body = JSON.stringify(request_data)
 	#var body = JSON.stringify({
 	#"model_path": model_path,
 	#"prompt": "girl",
@@ -899,6 +1125,8 @@ func _process(_delta: float):
 		if not OS.is_process_running(server_pid):
 			console.append_text("sd-server stopped\n")
 			server_process = {}
+			button_stop.disabled = true
+			button_strat_gen.disabled = false
 
 
 func process_pipe_buffer(is_error):
@@ -956,9 +1184,9 @@ func process_finished():
 		if not image.is_empty():
 			var texture = ImageTexture.create_from_image(image)
 			new_image.texture = texture
-			console.append_text(
-				"Done: " + current_output + "\n"
-			)
+			#console.append_text(
+			#	"Done: " + current_output + "\n"
+			#)
 			GenerationCache.set_status(
 				current_generation_id,
 				"completed")
@@ -1012,9 +1240,10 @@ func _on_image_file_dialog_selected(path):
 func _on_clear_image_pressed():
 	init_image = ""
 	inpaint_mask = ""
+	init_image_inp = ""
 	img2img_texture.texture = null
 	img2img_texture.visible = false
-
+	inpaint_window.hide()
 
 func load_last_generation():
 	if GenerationCache.data["generations"].is_empty():
@@ -1051,7 +1280,7 @@ func load_last_generation():
 	slider_steps.value = last.get("steps", 20)
 	slider_cfg.value = last.get("cfg", 7.0)
 	slider_strength.value = last.get("strength", 0.75)
-	
+	value_steps.text = slider_steps.value
 	#start_sd_server(model_path)
 
 func paste_inpaint_result():
@@ -1066,3 +1295,38 @@ func paste_inpaint_result():
 func to_console(text: String):
 	console.append_text(text)
 	
+func load_extra_arguments():
+	extra_arguments = GenerationCache.data.get("extra_arguments", "")
+	arguments_window.arguments_edit.text = extra_arguments
+func parse_extra_arguments() -> Dictionary:
+	var result := {}
+
+	for line in extra_arguments.split("\n", false):
+		line = line.strip_edges()
+		if line.is_empty():
+			continue
+
+		var parts = line.split("=", false, 1)
+		if parts.size() != 2:
+			push_warning("Неверный аргумент: " + line)
+			continue
+
+		var key = parts[0].strip_edges()
+		var value = parts[1].strip_edges().to_lower()
+
+		if value == "true":
+			result[key] = true
+		elif value == "false":
+			result[key] = false
+		elif value.is_valid_int():
+			result[key] = int(value)
+		elif value.is_valid_float():
+			result[key] = float(value)
+		else:
+			result[key] = parts[1].strip_edges()
+
+	return result
+func load_server_arguments():
+	server_arguments = GenerationCache.data.get(
+		"server_arguments", "")
+	arguments_window.server_arguments_edit.text = server_arguments
