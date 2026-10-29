@@ -20,7 +20,7 @@ var mask_path := ""
 @onready var blur_value = $VBoxContainer/Bottom/BlurValue
 @onready var output_size = $VBoxContainer/Bottom/OutputSize
 @onready var output_value = $VBoxContainer/Bottom/OutputSize/OutputValue
-
+@onready var clear_selection = $VBoxContainer/Canvas/SelectionRect/ClearSelection
 
 var mask_image: Image
 var mask_texture: ImageTexture
@@ -39,6 +39,9 @@ var original_image: Image
 var generation_selection_rect := Rect2()
 
 var main: Control
+
+var selecting_region := false
+var region_mode := false
 
 func _ready():
 	var app_dir = OS.get_executable_path().get_base_dir()
@@ -62,7 +65,24 @@ func _ready():
 	blur_slider.value_changed.connect(_on_blur_size_changed)
 	output_size.value_changed.connect(_on_output_size_changed)
 	_on_blur_size_changed(blur_slider.value)
-	
+	clear_selection.pressed.connect(_on_clear_region_pressed)
+
+func _on_clear_region_pressed():
+	selection_rect = Rect2()
+	selection_start = Vector2.ZERO
+	selection_end = Vector2.ZERO
+
+	selection_visual.visible = false
+	region_mode = false
+	selecting_region = true
+	selection_mode = true
+
+	# Снова ждём выделения новой области
+	select_region_button.text = "All Image"
+	apply_button.text = "Generate"
+
+	# Убираем старую региональную маску
+	_on_clear_pressed()
 
 func _on_output_size_changed(value):
 	output_value.text = str(int(value))
@@ -155,40 +175,78 @@ func blur_mask(image: Image, radius: int) -> Image:
 	return temp
 
 func _toggle_selection_mode():
+	if apply_button.disabled:
+		return
+
 	selection_mode = !selection_mode
-	if !apply_button.disabled:
-		if selection_mode:
-			select_region_button.text = "Brush"
-			apply_button.text = "Generate"
-			mask_view.modulate = Color(1, 1, 1, 0)
-			_on_clear_pressed()
-		else:
-			select_region_button.text = "Select Region"
-			apply_button.text = "Apply"
-			selection_visual.visible = false
-			mask_view.modulate = Color(1, 1, 1, 0.5)
-		
+	selecting_region = selection_mode
+	region_mode = false
+
+	if selection_mode:
+		select_region_button.text = "Cancel"
+		apply_button.text = "Generate"
+		mask_view.modulate = Color(1, 1, 1, 0)
+		selection_visual.visible = false
+	else:
+		select_region_button.text = "Select Region"
+		apply_button.text = "Apply"
+		selection_visual.visible = false
+		mask_view.modulate = Color(1, 1, 1, 0.5)
+
 
 func _on_selection_input(event):
-	if not selection_mode:
+	if not selecting_region:
 		return
 
 	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT:
-			if event.pressed:
-				selection_start = event.position
-				selection_end = event.position
-			else:
-				selection_end = event.position
+		if event.button_index != MOUSE_BUTTON_LEFT:
+			return
 
+		if event.pressed:
+			selection_start = event.position
+			selection_end = event.position
 			_update_selection_visual()
+		else:
+			selection_end = event.position
+			_update_selection_visual()
+
+			selecting_region = false
+			region_mode = true
+			selection_mode = true
+
+			select_region_button.text = "All Image"
+
+			create_region_mask()
+
+			print("Selection in image: ", selection_rect)
 
 	elif event is InputEventMouseMotion:
 		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			selection_end = event.position
 			_update_selection_visual()
-	if event is InputEventMouseButton and not event.pressed:
-		print("Selection in image: ", selection_rect)
+
+func create_region_mask():
+	if original_image == null:
+		return
+
+	var width = original_image.get_width()
+	var height = original_image.get_height()
+
+	mask_image = Image.create_empty(
+		width, height, false, Image.FORMAT_RGBA8
+	)
+	mask_image.fill(Color.BLACK)
+
+	var rect = get_mask_rect()
+
+	for y in range(int(rect.position.y), int(rect.end.y)):
+		for x in range(int(rect.position.x), int(rect.end.x)):
+			if x >= 0 and x < width and y >= 0 and y < height:
+				mask_image.set_pixel(x, y, Color.WHITE)
+
+	mask_texture = ImageTexture.create_from_image(mask_image)
+	mask_view.texture = mask_texture
+	mask_view.modulate = Color(1, 1, 1, 0.5)
 
 func _update_selection_visual():
 	var start = screen_to_image(selection_start)
@@ -343,8 +401,7 @@ func _on_clear_pressed():
 
 
 func _on_mask_input(event):
-	if selection_mode:
-		return
+
 	if mask_image == null:
 		return
 
@@ -409,7 +466,8 @@ func paint_circle(pos: Vector2, paint: bool):
 		for x in range(min_x, max_x + 1):
 			var dx = (x - image_pos.x) / radius
 			var dy = (y - image_pos.y) / radius
-
+			if region_mode and not selection_rect.has_point(Vector2(x, y)):
+				continue
 			if dx * dx + dy * dy <= 1.0:
 				if paint:
 					mask_image.set_pixel(x, y, Color(1, 1, 1, 1))
@@ -433,23 +491,23 @@ func draw_line_mask(from: Vector2, to: Vector2, paint: bool):
 
 
 func _on_apply_pressed():
-	if selection_mode:
-		_generate_inpaint()
+	if selecting_region:
+		return
+
+	if region_mode:
 		apply_button.disabled = true
+		_generate_inpaint()
 		return
 
 	if mask_image == null:
 		return
 
-	var blur_radius = int(blur_slider.value)
-
 	var final_mask = blur_mask(
 		mask_image,
-		blur_radius
+		int(blur_slider.value)
 	)
 
 	var error = final_mask.save_png(mask_path)
-
 	if error != OK:
 		push_error("Can't save mask: " + str(error))
 		return
@@ -461,40 +519,25 @@ func _generate_inpaint():
 	if selection_rect.size == Vector2.ZERO:
 		return
 
-	var mask_rect = get_mask_rect()
+	if original_image == null or mask_image == null:
+		return
 
-	var crop = original_image.get_region(selection_rect)
-
-	var crop_mask = Image.create_empty(
+	var rect = Rect2i(
+		int(selection_rect.position.x),
+		int(selection_rect.position.y),
 		int(selection_rect.size.x),
-		int(selection_rect.size.y),
-		false,
-		Image.FORMAT_RGBA8
+		int(selection_rect.size.y)
 	)
 
-	crop_mask.fill(Color(0, 0, 0, 1))
+	# Вырезаем изображение и уже отредактированную маску
+	var crop = original_image.get_region(rect)
+	var crop_mask = mask_image.get_region(rect)
 
-	var local_mask_rect = Rect2(
-		mask_rect.position - selection_rect.position,
-		mask_rect.size
+	# Размываем маску перед отправкой в Stable Diffusion
+	crop_mask = blur_mask(
+		crop_mask,
+		int(blur_slider.value)
 	)
-
-	for y in range(
-		int(local_mask_rect.position.y),
-		int(local_mask_rect.end.y)
-	):
-		for x in range(
-			int(local_mask_rect.position.x),
-			int(local_mask_rect.end.x)
-		):
-			if x >= 0 and x < crop_mask.get_width() and \
-			   y >= 0 and y < crop_mask.get_height():
-				crop_mask.set_pixel(
-					x,
-					y,
-					Color(1, 1, 1, 1)
-				)
-	
 
 	var app_dir = OS.get_executable_path().get_base_dir()
 
@@ -503,30 +546,29 @@ func _generate_inpaint():
 
 	var input_path = app_dir + "/inpaint_input.png"
 	var mask_path_local = app_dir + "/inpaint_mask.png"
-	
-	var blur_radius = int(blur_slider.value)
-	crop_mask = blur_mask(
-		crop_mask,
-		blur_radius )
-	
-	var error = crop.save_png(input_path)
 
+	var error = crop.save_png(input_path)
 	if error != OK:
-		push_error("Can't save inpaint input")
+		push_error("Can't save inpaint input: " + str(error))
 		return
 
 	error = crop_mask.save_png(mask_path_local)
-
 	if error != OK:
-		push_error("Can't save inpaint mask")
+		push_error("Can't save inpaint mask: " + str(error))
 		return
+
+	# Настраиваем размер генерации
 	_on_output_size_changed(output_size.value)
+
 	generation_selection_rect = selection_rect
+
 	generate_inpaint.emit(
-	input_path,
-	mask_path_local,
-	selection_rect)
-	print("EMIT DONE")
+		input_path,
+		mask_path_local,
+		selection_rect
+	)
+
+	print("INPAINT REGION EMITTED")
 
 func screen_to_image(pos: Vector2) -> Vector2:
 	var texture = image_view.texture
@@ -551,15 +593,13 @@ func screen_to_image(pos: Vector2) -> Vector2:
 
 func paste_result(result_path: String) -> bool:
 	main.to_console("PATH: " + result_path + "\n")
-	main.to_console(
-		"RECT: " + str(generation_selection_rect) + "\n"
-	)
-	var result 
-	if result_path == "":
+
+	if result_path.is_empty():
 		main.to_console("RESULT EMPTY\n")
 		return false
-	else:
-		result = Image.load_from_file(result_path)
+
+	var result = Image.load_from_file(result_path)
+
 	if result == null:
 		main.to_console("RESULT EMPTY\n")
 		return false
@@ -575,37 +615,63 @@ func paste_result(result_path: String) -> bool:
 		Image.INTERPOLATE_LANCZOS
 	)
 
-	original_image.blit_rect(
-		result,
-		Rect2i(
-			0,
-			0,
+	# Загружаем ту же размытую маску, что отправлялась в SD
+	var app_dir = OS.get_executable_path().get_base_dir()
+
+	if OS.has_feature("editor"):
+		app_dir = ProjectSettings.globalize_path("res://")
+
+	var mask_path_local = app_dir + "/inpaint_mask.png"
+	var blend_mask = Image.load_from_file(mask_path_local)
+
+	if blend_mask == null:
+		main.to_console("MASK EMPTY\n")
+		return false
+
+	if blend_mask.get_width() != target_size.x \
+	or blend_mask.get_height() != target_size.y:
+		blend_mask.resize(
 			target_size.x,
-			target_size.y
-		),
-		Vector2i(
-			int(generation_selection_rect.position.x),
-			int(generation_selection_rect.position.y)
+			target_size.y,
+			Image.INTERPOLATE_LANCZOS
 		)
-	)
+
+	var region_x = int(generation_selection_rect.position.x)
+	var region_y = int(generation_selection_rect.position.y)
+
+	for y in range(target_size.y):
+		for x in range(target_size.x):
+			var px = region_x + x
+			var py = region_y + y
+
+			if px < 0 or py < 0:
+				continue
+
+			if px >= original_image.get_width() \
+			or py >= original_image.get_height():
+				continue
+
+			# Белое = генерация, чёрное = оригинал
+			var mask_value = blend_mask.get_pixel(x, y).r
+			var old_color = original_image.get_pixel(px, py)
+			var new_color = result.get_pixel(x, y)
+
+			original_image.set_pixel(
+				px,
+				py,
+				old_color.lerp(new_color, mask_value)
+			)
 
 	image_view.texture = ImageTexture.create_from_image(original_image)
 
-	main.to_console("BLIT DONE\n")
-
 	var output_path = get_next_edit_path()
-
 	var error = original_image.save_png(output_path)
+
 	if error != OK:
-		main.to_console(
-			"ERROR SAVE: " + str(error) + "\n"
-		)
+		main.to_console("ERROR SAVE: " + str(error) + "\n")
 		return false
 
-	main.to_console(
-		"EDITED IMAGE SAVED: " + output_path + "\n"
-	)
-
+	main.to_console("EDITED IMAGE SAVED: " + output_path + "\n")
 	return true
 	
 func get_next_edit_path() -> String:

@@ -3,7 +3,8 @@ extends Window
 signal upscale_requested(settings: Dictionary)
 
 @onready var image_preview: TextureRect = $MarginContainer/VBoxContainer/ImagePreview
-@onready var scale_option: OptionButton = $MarginContainer/VBoxContainer/AdvancedPanel/ScaleRow/ScaleOption
+@onready var scale_slider: HSlider = $MarginContainer/VBoxContainer/AdvancedPanel/ScaleRow/ScaleOption
+@onready var scale_label: Label = $MarginContainer/VBoxContainer/AdvancedPanel/ScaleRow/ScaleValue
 @onready var advanced_button: Button = $MarginContainer/VBoxContainer/AdvancedButton
 @onready var advanced_panel: VBoxContainer = $MarginContainer/VBoxContainer/AdvancedPanel
 @onready var tile_size: OptionButton = $MarginContainer/VBoxContainer/AdvancedPanel/TileSize/TileSize
@@ -18,7 +19,8 @@ func _ready():
 	advanced_button.pressed.connect(func():
 		advanced_panel.visible = not advanced_panel.visible
 	)
-
+	scale_slider.value_changed.connect(func(value):
+		scale_label.text = "x%.1f" % value)
 	upscale_button.pressed.connect(_on_upscale_pressed)
 	close_requested.connect(hide)
 
@@ -38,19 +40,16 @@ func set_image(image: Image):
 
 func _on_upscale_pressed():
 	if source_image == null or source_image.is_empty():
-		push_warning("Нет исходного изображения")
+		push_warning("error image")
 		return
-
-	var scale_factor = int(
-		scale_option.get_item_text(scale_option.selected).trim_prefix("x")
-	)
-
+	#get_parent().to_console("upscale pressed")
+	var scale_factor: float = scale_slider.value
 	upscale_requested.emit({
-		"scale": scale_factor,
-		"tile_size": int(tile_size.get_item_text(tile_size.selected)),
-		"overlap": int(overlap.get_item_text(overlap.selected)),
-		"strength": strength.value
-	})
+	"scale": scale_factor,
+	"tile_size": int(tile_size.get_item_text(tile_size.selected)),
+	"overlap": int(overlap.get_item_text(overlap.selected)),
+	"strength": strength.value})
+
 
 func resize_source_image(scale_factor: int) -> Image:
 	var result = source_image.duplicate()

@@ -152,69 +152,135 @@ func _ready():
 	start_sd_server(model)
 	
 
+func blend_upscale_tile(tile: Image, tile_data: Dictionary):
+	var start_x = int(tile_data["x"])
+	var start_y = int(tile_data["y"])
+	var overlap_size = int(upscale_settings["overlap"])
+
+	var result_width = upscale_result.get_width()
+	var result_height = upscale_result.get_height()
+	var tile_width = tile.get_width()
+	var tile_height = tile.get_height()
+
+	for y in range(tile_height):
+		for x in range(tile_width):
+			var px = start_x + x
+			var py = start_y + y
+
+			if px >= result_width or py >= result_height:
+				continue
+
+			var weight = 1.0
+
+			# Левая граница
+			if start_x > 0:
+				var t = clamp(float(x) / overlap_size, 0.0, 1.0)
+				weight = min(weight, t * t * (3.0 - 2.0 * t))
+
+			# Правая граница
+			if start_x + tile_width < result_width:
+				var t = clamp(
+					float(tile_width - 1 - x) / overlap_size,
+					0.0, 1.0
+				)
+				weight = min(weight, t * t * (3.0 - 2.0 * t))
+
+			# Верхняя граница
+			if start_y > 0:
+				var t = clamp(float(y) / overlap_size, 0.0, 1.0)
+				weight = min(weight, t * t * (3.0 - 2.0 * t))
+
+			# Нижняя граница
+			if start_y + tile_height < result_height:
+				var t = clamp(
+					float(tile_height - 1 - y) / overlap_size, 0.0, 1.0
+				)
+				weight = min(weight, t * t * (3.0 - 2.0 * t))
+
+			var old_color = upscale_result.get_pixel(px, py)
+			var new_color = tile.get_pixel(x, y)
+
+			upscale_result.set_pixel(
+				px, py, old_color.lerp(new_color, weight)
+			)
+
 func finish_upscale():
-	var output_path = init_image.get_base_dir().path_join(
+	current_output = init_image.get_base_dir().path_join(
 		init_image.get_file().get_basename() + "_upscaled.png"
 	)
-
-	var error = upscale_result.save_png(output_path)
+	
+	var error = upscale_result.save_png(current_output)
 
 	if error == OK:
-		console.append_text("Upscale завершён: " + output_path + "\n")
+		console.append_text("Upscale completed: " + current_output + "\n")
 
 		new_image.texture = ImageTexture.create_from_image(upscale_result)
 	else:
-		console.append_text("Ошибка сохранения Upscale: " + str(error) + "\n")
+		console.append_text("error saving Upscale: " + str(error) + "\n")
 
 	upscale_active = false
 	upscale_tiles.clear()
 	upscale_tile_index = 0
 	current_job_id = ""
-
-	process_finished()
+	button_strat_gen.disabled = false
 
 func split_into_tiles(image: Image, tile_size: int, overlap_size: int) -> Array:
 	var tiles: Array = []
 	var step = tile_size - overlap_size
 
 	if step <= 0:
-		push_error("Overlap > Tile Size")
+		push_error("Overlap должен быть меньше Tile Size")
 		return tiles
 
 	for y in range(0, image.get_height(), step):
 		for x in range(0, image.get_width(), step):
-			var rect = Rect2i(
-				x, y,
-				min(tile_size, image.get_width() - x),
-				min(tile_size, image.get_height() - y)
+			var width = min(tile_size, image.get_width() - x)
+			var height = min(tile_size, image.get_height() - y)
+
+			# Создаём тайл фиксированного размера
+			var tile = Image.create(
+				tile_size, tile_size, false, image.get_format()
 			)
 
-			var tile = Image.create(
-				rect.size.x, rect.size.y, false, image.get_format()
-			)
-			tile.blit_rect(image, rect, Vector2i.ZERO)
+			# Заполняем его краевыми пикселями
+			for py in range(tile_size):
+				for px in range(tile_size):
+					var src_x = min(px, width - 1)
+					var src_y = min(py, height - 1)
+					tile.set_pixel(
+						px, py,
+						image.get_pixel(x + src_x, y + src_y)
+					)
 
 			tiles.append({
 				"image": tile,
 				"x": x,
-				"y": y
+				"y": y,
+				"width": width,
+				"height": height
 			})
 
 	return tiles
 func send_upscale_tile():
+	if upscale_tile_index >= upscale_tiles.size():
+		finish_upscale()
+		return
 	console.append_text(
 		"Upscale: send %d / %d\n" % [
 			upscale_tile_index + 1,
 			upscale_tiles.size()
 		]
 	)
-	if upscale_tile_index >= upscale_tiles.size():
-		finish_upscale()
-		return
-
 	var tile_data: Dictionary = upscale_tiles[upscale_tile_index]
 	var tile: Image = tile_data["image"]
-
+	console.append_text(
+	"TILE %d: pos=(%d,%d), size=%dx%d\n" % [
+		upscale_tile_index + 1,
+		int(tile_data["x"]),
+		int(tile_data["y"]),
+		tile.get_width(),
+		tile.get_height()
+	])
 	var tile_bytes = tile.save_png_to_buffer()
 	var tile_b64 = Marshalls.raw_to_base64(tile_bytes)
 
@@ -246,27 +312,25 @@ func send_upscale_tile():
 		HTTPClient.METHOD_POST,
 		body
 	)
-
 	if error != OK:
 		console.append_text("Ошибка отправки тайла: " + str(error) + "\n")
 		finish_upscale()
 func _on_upscale_requested(settings: Dictionary):
+	#to_console("upscale pressed 1\n")
 	if upscale_active:
 		return
-
+	#to_console("upscale pressed 2\n")
 	upscale_settings = settings
 	upscale_active = true
 	upscale_tile_index = 0
 
 	var source = upscale_window.source_image
-	var scale_factor = int(settings["scale"])
+	var scale_factor = float(settings["scale"])
 
+	var target_width = roundi(source.get_width() * scale_factor)
+	var target_height = roundi(source.get_height() * scale_factor)
 	upscale_result = source.duplicate()
-	upscale_result.resize(
-		source.get_width() * scale_factor,
-		source.get_height() * scale_factor,
-		Image.INTERPOLATE_LANCZOS
-	)
+	upscale_result.resize(target_width, target_height, Image.INTERPOLATE_LANCZOS)
 
 	upscale_tiles = split_into_tiles(
 		upscale_result,
@@ -275,12 +339,15 @@ func _on_upscale_requested(settings: Dictionary):
 	)
 
 	console.append_text(
-		"Upscale: подготовлено тайлов: "
+		"Upscale: total tiles: "
 		+ str(upscale_tiles.size()) + "\n"
 	)
 	if upscale_tiles.is_empty():
 		upscale_active = false
 		return
+	button_strat_gen.disabled = true
+	button_stop.disabled = false
+	start_time = Time.get_ticks_msec()/1000.0
 	send_upscale_tile()
 
 func _on_open_upscale_pressed():
@@ -509,18 +576,18 @@ func _on_poll_completed(
 			
 			if upscale_active:
 				var tile_data: Dictionary = upscale_tiles[upscale_tile_index]
-				var rect = Rect2i(0, 0, image.get_width(), image.get_height())
+				var original_width = int(tile_data["width"])
+				var original_height = int(tile_data["height"])
 
-				upscale_result.blit_rect(
-				image,
-				rect,
-				Vector2i(int(tile_data["x"]), int(tile_data["y"])))
+				var cropped_tile = image.get_region(
+				Rect2i(0, 0, original_width, original_height))
+				blend_upscale_tile(cropped_tile, tile_data)
 
 				upscale_tile_index += 1
 				current_job_id = ""
 
 				console.append_text(
-				"Upscale: тайл %d из %d готов\n" % [
+				"Upscale: tile %d of %d ready\n" % [
 				upscale_tile_index,
 				upscale_tiles.size()])
 
@@ -871,7 +938,6 @@ func _on_cfg_changed(value):
 func _on_strength_changed(value):
 	value_strength.text = str(float(value))
 
-		
 func generate():
 	console.append_text("\n========== GENERATE ==========\n")
 	model = model_path.text
@@ -1015,8 +1081,8 @@ func generate():
 	"output_format": "png",
 	"vae_tiling_params": {
 		"enabled": true,
-		"tile_size_x": 0,
-		"tile_size_y": 0,
+		"tile_size_x": 128,
+		"tile_size_y": 128,
 		"target_overlap": 0.5,
 		"rel_size_x": 0,
 		"rel_size_y": 0

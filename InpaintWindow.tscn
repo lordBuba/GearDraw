@@ -88,6 +88,23 @@ offset_bottom = 40.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_8cof1")
 
+[node name="ClearSelection" type="Button" parent="VBoxContainer/Canvas/SelectionRect" unique_id=1703989762]
+custom_minimum_size = Vector2(30, 22)
+custom_maximum_size = Vector2(30, 22)
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -16.0
+offset_top = -11.0
+offset_right = 14.0
+offset_bottom = 11.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "❌"
+
 [node name="Bottom" type="HBoxContainer" parent="VBoxContainer" unique_id=1363390509]
 custom_minimum_size = Vector2(0, 45)
 layout_mode = 2
@@ -115,7 +132,7 @@ text = "Clear"
 
 [node name="SelectRegion" type="Button" parent="VBoxContainer/Bottom" unique_id=14128323]
 layout_mode = 2
-text = "SelectRegion"
+text = "Select Region"
 
 [node name="ApplyButton" type="Button" parent="VBoxContainer/Bottom" unique_id=1750461420]
 layout_mode = 2
