@@ -42,6 +42,4 @@ The Upscale mode uses img2img generation on image tiles. Overlapping tiles are b
 
 GearDraw is a work in progress. Features and the interface may change as development continues.
 
-## License
 
-See the repository's license file for licensing information.
